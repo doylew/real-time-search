@@ -10,6 +10,7 @@ interface BucketNode {
 
 class BucketOpenList<T : BucketNode>(private val bound: Double, private var fMin: Double = Double.MAX_VALUE) {
 
+
     private val openList = AdvancedPriorityQueue<Bucket<T>>(1000000000, PotentialComparator(bound, fMin))
     private val lookUpTable = HashMap<GHPair, Bucket<T>>(10000000, 1.toFloat())
 
