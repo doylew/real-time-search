@@ -116,7 +116,7 @@ class BucketOpenListTest {
         val element4 = Node(3.0, 1.0, 2.0, 3)
         val element5 = Node(5.0, 3.0, 2.0, 1)
 
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             bop.add(element)
             bop.add(element2)
             bop.add(element3)
@@ -124,7 +124,7 @@ class BucketOpenListTest {
             bop.add(element5)
         }
         assertTrue { bop.minFValue == 3.0 }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             assertTrue { bop.minFValue == 3.0 }
             val removedElement = bop.chooseNode()
             assertTrue { removedElement!!.getFValue() == 3.0 }
@@ -133,7 +133,7 @@ class BucketOpenListTest {
         }
 
         assertTrue { bop.minFValue == 4.0 }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             assertTrue { bop.minFValue == 4.0 }
             val removedElement = bop.chooseNode()
             assertTrue { removedElement!!.getFValue() == 4.0 }
@@ -141,7 +141,7 @@ class BucketOpenListTest {
             assertTrue { removedElement!!.getHValue() == 2.0 }
         }
         assertTrue { bop.minFValue == 4.0 }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             assertTrue { bop.minFValue == 4.0 }
             val removedElement = bop.chooseNode()
             assertTrue { removedElement!!.getFValue() == 4.0 }
@@ -149,7 +149,7 @@ class BucketOpenListTest {
             assertTrue { removedElement!!.getHValue() == 1.0 }
         }
         assertTrue { bop.minFValue == 5.0 }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             assertTrue { bop.minFValue == 5.0 }
             val removedElement = bop.chooseNode()
             assertTrue { removedElement!!.getFValue() == 5.0 }
@@ -157,7 +157,7 @@ class BucketOpenListTest {
             assertTrue { removedElement!!.getHValue() == 2.0 }
         }
         assertTrue { bop.minFValue == 5.0 }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             assertTrue { bop.minFValue == 5.0 }
             val removedElement = bop.chooseNode()
             assertTrue { removedElement!!.getFValue() == 5.0 }
@@ -166,7 +166,7 @@ class BucketOpenListTest {
         }
         assertTrue { bop.minFValue == Double.MAX_VALUE }
         assertTrue { !bop.isNotEmpty() }
-        (1 until 10).forEach {
+        (1 until 2).forEach {
             bop.add(element)
             bop.add(element2)
             bop.add(element3)

@@ -11,27 +11,44 @@ interface BucketNode {
 class BucketOpenList<T : BucketNode>(private val bound: Double, private var fMin: Double = Double.MAX_VALUE) {
 
 
-    private val openList = AdvancedPriorityQueue<Bucket<T>>(1000000000, PotentialComparator(bound, fMin))
-    private val lookUpTable = HashMap<GHPair, Bucket<T>>(10000000, 1.toFloat())
+    private val openList = AdvancedPriorityQueue<GHPair>(1000000, PotentialComparator(bound, fMin))
+    private val lookUpTable = HashMap<GHPair, Bucket<T>>(1000000, 1.toFloat())
+    private val pairLookUp = HashMap<Pair<Double, Double>, GHPair>(1000000, 1.toFloat())
 
     private class BucketOpenListException(message: String) : Exception(message)
 
     private class PotentialComparator<T>(var bound: Double, var fMin: Double) : Comparator<T> {
         override fun compare(leftBucket: T, rightBucket: T): Int {
             if (leftBucket != null && rightBucket != null) {
-                if (leftBucket is Bucket<*> && rightBucket is Bucket<*>) {
+                if (leftBucket is GHPair && rightBucket is GHPair) {
                     var leftBucketPotential = ((bound * fMin) - leftBucket.g) / (leftBucket.h)
                     var rightBucketPotential = ((bound * fMin) - rightBucket.g) / (rightBucket.h)
                     if(leftBucket.h == 0.0) leftBucketPotential = Double.MAX_VALUE
                     if(rightBucket.h == 0.0) rightBucketPotential = Double.MAX_VALUE
-                    return Math.signum(rightBucketPotential - leftBucketPotential).toInt()
+
+                    // First compare by potential (bigger is preferred), then by f (smaller is preferred), then by g (smaller is preferred)
+                    if (leftBucketPotential > rightBucketPotential) return -1
+                    if (leftBucketPotential < rightBucketPotential) return 1
+
+                    if (leftBucket.g < rightBucket.g) return -1
+                    if (leftBucket.g > rightBucket.g) return 1
+
+                    if (leftBucket.h < rightBucket.h) return -1
+                    if (leftBucket.h > rightBucket.h) return 1
+
+                    return 0
                 }
             }
-            return -1
+            throw BucketOpenListException("Null buckets or non-bucket elements on open.")
         }
     }
 
-    private data class GHPair(val g: Double, val h: Double)
+    private data class GHPair(val g: Double, val h: Double) : Indexable {
+        override var index: Int = -1
+
+        val f
+            get() = g + h
+    }
 
     data class Bucket<T : BucketNode>(val f: Double, val g: Double, val h: Double,
                                       val nodes: ArrayList<T>) : Indexable {
@@ -92,7 +109,7 @@ class BucketOpenList<T : BucketNode>(private val bound: Double, private var fMin
         element.updateIndex(-1)
 
         if (bucketLookUp.nodes.isEmpty()) {
-            openList.remove(bucketLookUp)
+            openList.remove(elementGHPair)
         }
 
         if (element.getFValue() == minFValue) {
@@ -122,25 +139,38 @@ class BucketOpenList<T : BucketNode>(private val bound: Double, private var fMin
             openList.reorder(PotentialComparator(bound, fMin))
         }
 
-        val elementGHPair = GHPair(element.getGValue(), element.getHValue())
-        val targetBucket = lookUpTable[elementGHPair]
+        val ghPair = Pair(element.getGValue(), element.getHValue())
+        val elementGHPair = pairLookUp[ghPair]
 
+        if (elementGHPair != null) {
+            // have we seen this pair before
+            val targetBucket = lookUpTable[elementGHPair]
+            addElementToTargetBucket(element, targetBucket, elementGHPair)
+        } else {
+            // we have not seen this pair before make one
+            val newGHPair = GHPair(element.getGValue(), element.getHValue())
+            pairLookUp[ghPair] = newGHPair
+            val targetBucket = lookUpTable[newGHPair]
+            addElementToTargetBucket(element, targetBucket, newGHPair)
+        }
+    }
+
+    private fun addElementToTargetBucket(element: T, targetBucket: Bucket<T>?, elementGHPair: GHPair) {
         if (targetBucket == null) {
             // make new bucket
             val bucketNodes = arrayListOf(element)
             val newBucket = Bucket(element.getFValue(), element.getGValue(), element.getHValue(), bucketNodes)
 
             element.updateIndex(bucketNodes.indexOf(element))
-            openList.add(newBucket)
+            openList.add(elementGHPair)
             lookUpTable[elementGHPair] = newBucket
-
         } else {
             // we have a bucket go get it
             val bucketNodes = targetBucket.nodes
 
             bucketNodes.add(element)
             element.updateIndex(bucketNodes.indexOf(element))
-            if (bucketNodes.size == 1) openList.add(targetBucket)
+            if (bucketNodes.size == 1) openList.add(elementGHPair)
         }
     }
 
@@ -149,12 +179,12 @@ class BucketOpenList<T : BucketNode>(private val bound: Double, private var fMin
             throw BucketOpenListException("Nothing left to pop!")
         }
 
-        val topBucketOnOpen = openList.peek()?.nodes ?: throw BucketOpenListException("No array in bucket!")
-        val firstElementInTopBucket = topBucketOnOpen.first()
+        val topBucketOnOpen = lookUpTable[openList.peek()]
+        val firstElementInTopBucket = topBucketOnOpen?.nodes?.first() ?: throw BucketOpenListException("Nothing to pop!")
 
-        topBucketOnOpen.remove(firstElementInTopBucket)
+        topBucketOnOpen.nodes.remove(firstElementInTopBucket)
 
-        if (topBucketOnOpen.isEmpty()) {
+        if (topBucketOnOpen.nodes.isEmpty()) {
             openList.pop() // pop the empty bucket
         }
 
