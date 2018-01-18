@@ -31,7 +31,7 @@ class SimpleBucketOpenList<E>(private val weight: Double) where E : BucketNode, 
     }
 
     private var fMin = Double.MAX_VALUE
-    private val openList = AdvancedPriorityQueue<E>(1000000000, PotentialComparator(weight, fMin)) // ArrayList<E>()
+    private val openList = ArrayList<E>()
 
     val minFValue
         get() = fMin
@@ -52,7 +52,7 @@ class SimpleBucketOpenList<E>(private val weight: Double) where E : BucketNode, 
 
     private fun recomputeMinFValue() {
         if (openList.isNotEmpty()) {
-            fMin = openList.peek()?.getFValue() ?: throw SimpleBucketOpenListException("OpenList is empty!")
+            //fMin = openList.peek()?.getFValue() ?: throw SimpleBucketOpenListException("OpenList is empty!")
             openList.forEach { node ->
                 if (node.getFValue() < fMin) {
                     fMin = node.getFValue()
@@ -74,15 +74,15 @@ class SimpleBucketOpenList<E>(private val weight: Double) where E : BucketNode, 
     private fun pop(): E? {
         recomputeMinFValue()
         val currentFMin = fMin
-        openList.reorder(PotentialComparator(weight, currentFMin))
-        var currentHighestPotentialNode = openList.peek() ?: throw SimpleBucketOpenListException("OpenList is Empty!")
+        //openList.reorder(PotentialComparator(weight, currentFMin))
+        //var currentHighestPotentialNode = openList.peek() ?: throw SimpleBucketOpenListException("OpenList is Empty!")
         openList.forEach { node ->
             val potential = computePotential(node, currentFMin)
-            val currentHighestPotential = computePotential(currentHighestPotentialNode, currentFMin)
-            if (potential > currentHighestPotential) currentHighestPotentialNode = node
+            //val currentHighestPotential = computePotential(currentHighestPotentialNode, currentFMin)
+            //if (potential > currentHighestPotential) currentHighestPotentialNode = node
         }
-        openList.remove(currentHighestPotentialNode)
-        return currentHighestPotentialNode
+        //openList.remove(currentHighestPotentialNode)
+        return null //currentHighestPotentialNode
     }
 
     private fun insert(element: E) = openList.add(element)
